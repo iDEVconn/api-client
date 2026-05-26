@@ -1,6 +1,6 @@
 {
   "name": "@idevconn/api-client",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Tiny JWT fetch wrapper with auto refresh, typed errors, and pluggable callbacks. Framework-agnostic. ~80 LOC. Zero runtime deps.",
   "license": "Apache-2.0",
   "author": "iDEVconn",

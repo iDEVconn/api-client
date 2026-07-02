@@ -48,7 +48,30 @@ describe("createApiClient", () => {
     expect(url).toBe(`${BASE_URL}/me`);
     const headers = new Headers(init.headers);
     expect(headers.get("Authorization")).toBe("Bearer access-1");
+  });
+
+  it("sets Content-Type: application/json when a body is present", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ ok: true }));
+    const api = createApiClient(makeConfig());
+
+    await api("/items", { method: "POST", body: JSON.stringify({ name: "x" }) });
+
+    const call = fetchMock.mock.calls[0]!;
+    const init = call[1] as RequestInit;
+    const headers = new Headers(init.headers);
     expect(headers.get("Content-Type")).toBe("application/json");
+  });
+
+  it("omits Content-Type when there is no body (e.g. bare DELETE)", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+    const api = createApiClient(makeConfig());
+
+    await api("/items/1", { method: "DELETE" });
+
+    const call = fetchMock.mock.calls[0]!;
+    const init = call[1] as RequestInit;
+    const headers = new Headers(init.headers);
+    expect(headers.get("Content-Type")).toBeNull();
   });
 
   it("omits Content-Type when body is FormData", async () => {

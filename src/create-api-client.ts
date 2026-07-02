@@ -46,7 +46,11 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
     const token = cfg.getAccessToken();
     const headers = new Headers(options.headers);
     if (token) headers.set("Authorization", `Bearer ${token}`);
-    if (!(options.body instanceof FormData) && !headers.has("Content-Type")) {
+    if (
+      options.body !== undefined &&
+      !(options.body instanceof FormData) &&
+      !headers.has("Content-Type")
+    ) {
       headers.set("Content-Type", "application/json");
     }
 

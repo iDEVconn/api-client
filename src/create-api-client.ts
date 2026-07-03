@@ -10,8 +10,25 @@ const DEFAULTS = {
 
 export function createApiClient(config: ApiClientConfig): ApiClient {
   const cfg = { ...DEFAULTS, ...config };
+  let inFlightRefresh: Promise<string | null> | null = null;
 
-  async function refresh(): Promise<string | null> {
+  // Concurrent 401s (e.g. several in-flight requests when the access token
+  // expires) must share a single refresh call. Backends that rotate refresh
+  // tokens (issue a new one and invalidate the old on each use) will reject
+  // every refresh attempt after the first if each caller fires its own
+  // request with the same now-stale token — that spurious rejection would
+  // incorrectly trigger onUnauthorized() even though the first refresh
+  // succeeded moments earlier.
+  function refresh(): Promise<string | null> {
+    if (!inFlightRefresh) {
+      inFlightRefresh = doRefresh().finally(() => {
+        inFlightRefresh = null;
+      });
+    }
+    return inFlightRefresh;
+  }
+
+  async function doRefresh(): Promise<string | null> {
     const refreshToken = cfg.getRefreshToken();
     if (!refreshToken) return null;
 

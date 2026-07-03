@@ -221,6 +221,27 @@ describe("createApiClient", () => {
     });
   });
 
+  it("deduplicates concurrent refreshes so a rotated refresh token isn't reused across requests", async () => {
+    const onTokenRefreshed = vi.fn();
+    fetchMock
+      .mockResolvedValueOnce(new Response("", { status: 401 })) // A initial
+      .mockResolvedValueOnce(new Response("", { status: 401 })) // B initial
+      .mockResolvedValueOnce(
+        jsonResponse({ access_token: "access-2", refresh_token: "refresh-2" }),
+      ) // single refresh call
+      .mockResolvedValueOnce(jsonResponse({ a: true })) // A retry
+      .mockResolvedValueOnce(jsonResponse({ b: true })); // B retry
+
+    const api = createApiClient(makeConfig({ onTokenRefreshed }));
+
+    const [resultA, resultB] = await Promise.all([api("/a"), api("/b")]);
+
+    expect(resultA).toEqual({ a: true });
+    expect(resultB).toEqual({ b: true });
+    expect(onTokenRefreshed).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+  });
+
   it("skips refresh entirely when no token is present", async () => {
     fetchMock.mockResolvedValueOnce(new Response("", { status: 401 }));
     const onUnauthorized = vi.fn();

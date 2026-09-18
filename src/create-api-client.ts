@@ -35,7 +35,11 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
     try {
       const res = await fetch(`${cfg.baseUrl}${cfg.refreshPath}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        credentials: cfg.credentials,
+        headers: {
+          "Content-Type": "application/json",
+          ...cfg.getRefreshHeaders?.(),
+        },
         body: JSON.stringify({ [cfg.refreshRequestField]: refreshToken }),
       });
       if (!res.ok) return null;
@@ -73,7 +77,7 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
 
     let res: Response;
     try {
-      res = await fetch(`${cfg.baseUrl}${path}`, { ...options, headers });
+      res = await fetch(`${cfg.baseUrl}${path}`, { ...options, headers, credentials: cfg.credentials });
     } catch (cause) {
       const err = new ApiError(
         0,
@@ -89,7 +93,7 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       if (newToken) {
         headers.set("Authorization", `Bearer ${newToken}`);
         try {
-          res = await fetch(`${cfg.baseUrl}${path}`, { ...options, headers });
+          res = await fetch(`${cfg.baseUrl}${path}`, { ...options, headers, credentials: cfg.credentials });
         } catch (cause) {
           const err = new ApiError(
             0,

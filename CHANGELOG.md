@@ -1,5 +1,11 @@
 # @idevconn/api-client
 
+## 0.3.3
+
+### Patch Changes
+
+- Add `credentials` and `getRefreshHeaders` config options for cookie-based refresh flows. The `credentials` field is passed to all fetch calls (both main request and refresh request), enabling `'include'` for cross-origin cookie sending. The `getRefreshHeaders` callback allows injecting extra headers (like CSRF tokens) into the refresh request only.
+
 ## 0.3.2
 
 ### Patch Changes

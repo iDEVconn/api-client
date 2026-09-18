@@ -40,6 +40,21 @@ export interface ApiClientConfig {
 
   /** Response field name carrying the new refresh token. Default: `refresh_token`. */
   refreshTokenField?: string;
+
+  /**
+   * Passed through to every `fetch()` call this client makes (both the main
+   * request and the internal refresh request). Needed to send cookies on
+   * cross-origin requests (`'include'`). Default: browser default
+   * (`'same-origin'`).
+   */
+  credentials?: RequestCredentials;
+
+  /**
+   * Extra headers merged into the refresh request only — e.g. a CSRF
+   * double-submit token read from a cookie. Called fresh on every refresh
+   * attempt, never cached.
+   */
+  getRefreshHeaders?: () => Record<string, string>;
 }
 
 export type ApiClient = <T = unknown>(

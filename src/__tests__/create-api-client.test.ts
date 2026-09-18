@@ -221,6 +221,41 @@ describe("createApiClient", () => {
     });
   });
 
+  it("passes credentials through to both the main request and the refresh request", async () => {
+    fetchMock
+      .mockResolvedValueOnce(new Response("", { status: 401 }))
+      .mockResolvedValueOnce(
+        jsonResponse({ access_token: "access-2", refresh_token: "refresh-2" }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ ok: true }));
+
+    const api = createApiClient(makeConfig({ credentials: "include" }));
+    await api("/protected");
+
+    for (const call of fetchMock.mock.calls) {
+      const init = call[1] as RequestInit;
+      expect(init.credentials).toBe("include");
+    }
+  });
+
+  it("merges getRefreshHeaders into the refresh request only, not the main request", async () => {
+    const getRefreshHeaders = vi.fn(() => ({ "X-CSRF-Token": "csrf-abc" }));
+    fetchMock
+      .mockResolvedValueOnce(new Response("", { status: 401 }))
+      .mockResolvedValueOnce(
+        jsonResponse({ access_token: "access-2", refresh_token: "refresh-2" }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ ok: true }));
+
+    const api = createApiClient(makeConfig({ getRefreshHeaders }));
+    await api("/protected");
+
+    const mainCallHeaders = new Headers((fetchMock.mock.calls[0]![1] as RequestInit).headers);
+    expect(mainCallHeaders.get("X-CSRF-Token")).toBeNull();
+    const refreshCallHeaders = new Headers((fetchMock.mock.calls[1]![1] as RequestInit).headers);
+    expect(refreshCallHeaders.get("X-CSRF-Token")).toBe("csrf-abc");
+  });
+
   it("deduplicates concurrent refreshes so a rotated refresh token isn't reused across requests", async () => {
     const onTokenRefreshed = vi.fn();
     fetchMock

@@ -14,7 +14,10 @@ name: Release
 #   * Deprecated npm config cleared so `npm publish` doesn't trip on a
 #     legacy `always-auth` setting baked into the runner image.
 #   * `npm install -g npm@latest` ensures we have OIDC trusted-publishing
-#     support (npm >= 9.5) regardless of the action's Node bundle.
+#     support (npm >= 9.5) regardless of the action's Node bundle. Runner
+#     pinned to Node 24 (below) because npm 12+ requires
+#     Node ^22.22.2 || ^24.15.0 || >=26 — Node 20 no longer satisfies
+#     `npm@latest`.
 #   * `NPM_CONFIG_PROVENANCE=true` emits an npm provenance attestation
 #     for every published version (requires `id-token: write`).
 
@@ -41,7 +44,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           registry-url: https://registry.npmjs.org
 
